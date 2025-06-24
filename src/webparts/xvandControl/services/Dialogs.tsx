@@ -30,6 +30,12 @@ interface BaseDialogProps {
 interface AddUserDialogProps extends BaseDialogProps {
 }
 
+interface DeleteUserDialogProps extends BaseDialogProps {
+    userId?: string;
+    userPrincipalName?: string;
+    selectedUser?: string;
+}
+
 interface AddMultiUserDialogProps extends BaseDialogProps {
     userCount?: number;
 }
@@ -46,12 +52,13 @@ interface CreateMailboxDialogProps extends BaseDialogProps {
     mailboxName?: string;
 }
 
-type DialogPropsMap = {
+export type DialogPropsMap = {
     addUser: AddUserDialogProps;
     addMultiUser: AddMultiUserDialogProps;
     addRole: AddRoleDialogProps;
     print: PrintDialogProps;
     createMailbox: CreateMailboxDialogProps;
+    deleteUser: DeleteUserDialogProps;
     //   exportToExcel: ExportToExcelDialogProps;
 };
 
@@ -99,6 +106,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ onClose, context }) => {
             setLoading(true);
             try {
                 const domains = await MSGraphService.getDomains();
+                const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${domain}`;
                 console.log("Domains:", domains);
                 const user: User = {
                     accountEnabled: true,
@@ -108,10 +116,12 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ onClose, context }) => {
                         password: generateSecurePassword(),
                         forceChangePasswordNextSignIn: false,
                     },
-                    userPrincipalName: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${domain}`, // Replace with your domain
+                    givenName: firstName,
+                    surname: lastName,
+                    userPrincipalName: email,
                 }
                 console.log('Adding user:', user);
-                const response = await MSGraphService.addUser(user);
+                const response = await MSGraphService.createUser(user);
                 if (response.userPrincipalName) {
                     alert(`User ${response.userPrincipalName} added successfully.`);
                 }
@@ -226,6 +236,39 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({ onClose, context }) => {
     );
 };
 
+const DeleteUserDialog: React.FC<DeleteUserDialogProps> = ({ onClose, userPrincipalName, selectedUser }) => {
+    const handleRemove = async (): Promise<void> => {
+        if (!userPrincipalName) {
+            alert('User Principal Name is required for deletion');
+            return;
+        }
+        try {
+            await MSGraphService.removeUser(userPrincipalName);
+            alert(`User ${selectedUser} deleted successfully.`);
+            onClose();
+        } catch (error) {
+            alert('Error: ' + (error as Error).message);
+        }
+    }
+
+    return (
+    <Dialog open onOpenChange={() => onClose()}>
+        <DialogSurface>
+            <DialogBody>
+                <DialogTitle>Delete User</DialogTitle>
+                <DialogContent>
+                    {selectedUser ? `Are you sure you want to delete user: ${selectedUser}?` : 'Content for deleting user.'}
+                </DialogContent>
+                <DialogActions>
+                    <Button appearance="primary" onClick={handleRemove}>Delete</Button>
+                    <Button appearance="secondary" onClick={onClose}>Cancel</Button>
+                </DialogActions>
+            </DialogBody>
+        </DialogSurface>
+    </Dialog>
+    )
+};
+
 const AddMultiUserDialog: React.FC<AddMultiUserDialogProps> = ({ onClose, userCount }) => (
     <Dialog open onOpenChange={() => onClose()}>
         <DialogSurface>
@@ -313,6 +356,8 @@ export const DialogsManager: React.FC<DialogManagerProps> = ({
             return <PrintDialog {...(dialogProps as PrintDialogProps)} onClose={onClose} />;
         case 'createMailbox':
             return <CreateMailboxDialog {...(dialogProps as CreateMailboxDialogProps)} onClose={onClose} />;
+        case 'deleteUser':
+            return <DeleteUserDialog {...(dialogProps as DeleteUserDialogProps)} onClose={onClose} context={context} />;
         default:
             return null;
     }

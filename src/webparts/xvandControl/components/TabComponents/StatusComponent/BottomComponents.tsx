@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { Button } from '@fluentui/react-components';
 import styles from './StatusTab.module.scss';
+import { useDialog } from '../../../services/DialogContext';
+import { DialogPropsMap } from '../../../services/Dialogs';
 
 const buttonList = [
   { id: 'deleteUser', label: "Delete User", text: 'Delete User' },
@@ -12,7 +14,14 @@ const buttonList = [
   { id: 'reprocessLicense', label: "Reprocess O365 License", text: 'Reprocess Office 365 Group Based License Assignment' },
 ];
 
-export const UserActionsPanel: React.FC = () => {
+interface BottomComponentsProps {
+  userPrincipalName: string | undefined;
+  selectedUser: string | undefined;
+}
+
+export const BottomComponents: React.FC<BottomComponentsProps> = ({ userPrincipalName, selectedUser }) => {
+  const { openDialog } = useDialog();
+
   return (
     <div className={styles.bottomPanel}>
       {buttonList.map((btn) => (
@@ -22,6 +31,7 @@ export const UserActionsPanel: React.FC = () => {
               id={btn.id}
               appearance="primary"
               className={styles.buttonAction}
+              onClick={() => openDialog(btn.id as keyof DialogPropsMap, { userPrincipalName, selectedUser })}
             >
               {btn.label}
             </Button>

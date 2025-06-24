@@ -51,7 +51,7 @@ export const StatusTab: React.FC<IStatusTabProps> = ({ absoluteUrl }) => {
     const getAllUsers = async(): Promise<ISiteUserInfo[]> => {
         setIsUsersLoading(true);
         try {
-            const users = await MSGraphService.getUsers();
+            const users = await SharePointAPIService.getSiteUsers();
             if (users?.length > 0) {
                 console.log('Первый пользователь: ', users.length, users[39]);
                 return users.filter(user => user.UserId !== null && user.IsHiddenInUI === false);

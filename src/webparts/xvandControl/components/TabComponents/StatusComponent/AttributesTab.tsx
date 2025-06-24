@@ -4,7 +4,7 @@ import {
   Textarea, Field
 } from "@fluentui/react-components";
 import { AttributesData } from '../../../types/statusTypes';
-import { UserActionsPanel } from './BottomComponents';
+import { BottomComponents } from './BottomComponents';
 
 interface AttributeTabProps {
   attributes: AttributesData;
@@ -49,11 +49,11 @@ export const AttributeTab: React.FC<AttributeTabProps> = ({ attributes }) => {
           ))}
         </tbody>
       </table>
-      <UserActionsPanel />
+      <BottomComponents userPrincipalName={attributes.userPrincipalName} selectedUser={attributes.displayName} />
       <Field label="Notes">
         <Textarea
           appearance="outline"
-          resize="both"
+          resize="vertical"
         />
       </Field>
     </>

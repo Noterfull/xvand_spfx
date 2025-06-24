@@ -25,7 +25,7 @@ const MSGraphService = {
       throw error;
     }
   },
-  addUser: async (user: User): Promise<User> => {
+  createUser: async (user: User): Promise<User> => {
     if (!graphClient) throw new Error("Graph client is not initialized. Call init(context) first.");
     try {
       const response: User = await graphClient.api('/users').post(user);
@@ -33,6 +33,17 @@ const MSGraphService = {
       return response;
     } catch (error) {
       console.error(`Error adding user ${user.displayName}:`, error);
+      throw error;
+    }
+  },
+  removeUser: async (userId: string): Promise<string> => {
+    if (!graphClient) throw new Error("Graph client is not initialized. Call init(context) first.");
+    try {
+      await graphClient.api(`/users/${userId}`).delete();
+      console.log(`User with ID ${userId} removed successfully.`);
+      return userId;
+    } catch (error) {
+      console.error(`Error removing user with ID ${userId}:`, error);
       throw error;
     }
   },
@@ -58,17 +69,24 @@ const MSGraphService = {
     }
   },
 
-  getUserAttributes: async (userPrincipalName: string | undefined): Promise<IUserAttributes> => {
+  getUserAttributes: async (userPrincipalName: string | undefined, options?: { select?: string[], filter?: string }): Promise<IUserAttributes> => {
     if (!graphClient) throw new Error("Graph client is not initialized. Call init(context) first.");
     if (!userPrincipalName) throw new Error("userPrincipalName is undefined");
 
     try {
       const encodedUPN = encodeURIComponent(userPrincipalName);
-      const response: IUserAttributes = await graphClient
+      let request = graphClient
         .api(`/users/${encodedUPN}`)
-        .header('Accept', 'application/json;odata.metadata=none')
-        .select('displayName, givenName, surname, userPrincipalName, userType, createdDateTime, lastPasswordChangeDateTime, proxyAddresses, mail, assignedLicenses')
-        .get();
+        .header('Accept', 'application/json;odata.metadata=none');
+
+      if (options?.select && options.select.length > 0) {
+        request = request.select(options.select.join(','));
+      }
+
+      if (options?.filter) {
+        request = request.filter(options.filter);
+      }
+      const response: IUserAttributes = await request.get();
       console.log(`Fetched attributes for user '${userPrincipalName}':`, response);
       return response;
     } catch (error) {

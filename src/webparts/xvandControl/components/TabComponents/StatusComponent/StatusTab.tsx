@@ -10,6 +10,7 @@ import { AttributesData, RdsAppData, SecurityGroupData, MfaData, ProfileInfoData
 import MSGraphService from '../../../services/MSGraphService';
 import { DialogsManager } from '../../../services/Dialogs';
 import { WebPartContext } from '@microsoft/sp-webpart-base';
+import { DialogProvider } from '../../../services/DialogContext';
 
 export interface IStatusTabProps {
   absoluteUrl: string | undefined;
@@ -71,7 +72,6 @@ export const StatusTab: React.FC<IStatusTabProps> = (props) => {
     setDialogParams(params ?? {});
   };
 
-
   const loadTabData = async (tab: string, userPrincipalName: string | undefined): Promise<void> => {
     if (!userPrincipalName) {
       setTabData({});
@@ -84,7 +84,8 @@ export const StatusTab: React.FC<IStatusTabProps> = (props) => {
     try {
       switch (tab) {
         case 'attributes': {
-          const attributes = await MSGraphService.getUserAttributes(userPrincipalName);
+          const options = { select: ['displayName', 'givenName', 'surname', 'userPrincipalName', 'userType', 'createdDateTime', 'lastPasswordChangeDateTime', 'proxyAddresses', 'mail', 'assignedLicenses'] };
+          const attributes = await MSGraphService.getUserAttributes(userPrincipalName, options);
           if (currentUser === userPrincipalName) {
             setTabData(prev => ({ ...prev, attributes }));
           }
@@ -144,10 +145,10 @@ export const StatusTab: React.FC<IStatusTabProps> = (props) => {
                 <List className={styles.list}>
                   {users.map((user) => (
                     <UserCard
-                      key={user.Id}
+                      key={user.id}
                       user={user}
-                      selected={selectedUser === user.Id}
-                      onClick={async () => { await getUserInfo(user.LoginName, user.Id); }}
+                      selected={selectedUser === user.id}
+                      onClick={async () => { await getUserInfo(user.userPrincipalName!, user.id!); }}
                       absoluteUrl={absoluteUrl}
                     />
                   ))}
@@ -165,8 +166,8 @@ export const StatusTab: React.FC<IStatusTabProps> = (props) => {
                   <div className={styles.selecteUser}>
                     <span> User:&nbsp;
                       {userPrincipalName ?? ''}
-                      {userPrincipalName && userData.DisplayName ? ' - ' : ''}
-                      {userData.DisplayName ?? ''}
+                      {userPrincipalName && userData.displayName ? ' - ' : ''}
+                      {userData.displayName ?? ''}
                     </span>
                   </div>
                   <div className={styles.tabContainer}>
@@ -190,7 +191,10 @@ export const StatusTab: React.FC<IStatusTabProps> = (props) => {
                       ))}
                     </TabList>
                   </div>
-                  <TabContent activeTab={activeTab} isLoading={tabLoading} data={tabData[activeTab as keyof typeof tabData]} />
+                  <DialogProvider context={context}>
+                    <TabContent activeTab={activeTab} isLoading={tabLoading} data={tabData[activeTab as keyof typeof tabData]} />
+                  </DialogProvider>
+
                 </div>
               ) : <div>Data not found</div>}
             </section>
