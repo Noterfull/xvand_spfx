@@ -1,0 +1,190 @@
+
+import * as React from 'react';
+import { useState } from 'react';
+import '@pnp/sp';
+import { List, ListItem, Persona, Button, TabList, Tab } from '@fluentui/react-components';
+import { Spinner, SpinnerSize } from '@fluentui/react';
+import SharePointAPIService from '../../../services/SharePointAPIService';
+import { ISiteUserInfo } from '@pnp/sp/site-users';
+import { IUserProfile } from "@pnp/sp/profiles";
+import styles from './StatusTab.module.scss';
+import { ButtonActions } from '../../../services/ButtonActions';
+import type { SelectTabEvent, SelectTabData } from "@fluentui/react-components";
+
+export interface IStatusTabProps {
+    absoluteUrl: string | undefined;
+}
+
+const buttons = [
+    { id: "addUser", label: "Add User", onClick: ButtonActions.addUser },
+    { id: "addMultiUser", label: "Add Multiple Users", onClick: ButtonActions.addMultiUser },
+    { id: "addRole", label: "Add Role", onClick: ButtonActions.addRole },
+    { id: "print", label: "Print", onClick: ButtonActions.print },
+    { id: "createMailbox", label: "Create Shared Mailbox", onClick: ButtonActions.createMailbox },
+    { id: "exportToExcel", label: "Export To Excel", onClick: ButtonActions.exportToExcel }
+];
+
+const tabs = [
+    { id: "attributes", value: "attributes", label: "Attributes" },
+    { id: "rdsapp",  value: "rdsapp", label: "RDS Applications" },
+    { id: "securitygroup", value: "securitygroup", label: "Security Group" },
+    { id: "mfa", value: "mfa", label: "MFA" },
+    { id: "profileinfo", value: "profileinfo", label: "Profile Info" },
+    { id: "adfs", value: "adfs", label: "ADFS" },
+    { id: "msmfa", value: "msmfa", label: "MS MFA" }
+];
+
+export const StatusTab: React.FC<IStatusTabProps> = ({ absoluteUrl }) => {
+    const [isUsersLoading, setIsUsersLoading] = useState<boolean>(false);
+    const [isUserInfoLoading, setIsUserInfoLoading] = useState<boolean>(false);
+    const [users, setUsers] = useState<ISiteUserInfo[]>([]);
+    const [selectedUser, setSelectedUser] =  useState<number | null>(null);
+    const [userData, setUserData] = useState<IUserProfile | null>(null);
+    const [ activeTab, setActiveTab ] = useState<string>("");
+
+    const handleTabChange = (event: SelectTabEvent, data: SelectTabData): void =>  {
+        if (data.value !== undefined) {
+            setActiveTab(String(data.value));
+        }
+    };
+
+    const getAllUsers = async(): Promise<ISiteUserInfo[]> => {
+        setIsUsersLoading(true);
+        try {
+            const users = await MSGraphService.getUsers();
+            if (users?.length > 0) {
+                console.log('Первый пользователь: ', users.length, users[39]);
+                return users.filter(user => user.UserId !== null && user.IsHiddenInUI === false);
+            } else {
+                console.log("Пользователей не найдено");
+                return [];
+            }
+        } catch (error) {
+            console.error("Ошибка загрузки пользователей:", error);
+            return [];
+        }finally {
+            setIsUsersLoading(false);
+        }
+    };
+
+    const getUserInfo = async(loginName: string, userId: number): Promise<void> => {
+        setIsUserInfoLoading(true);
+        try {
+            setSelectedUser(userId);
+            const details = await SharePointAPIService.getUserInfoByLoginName(loginName);
+            if (details && typeof details === 'object') {
+                console.log('Данные пользователя: ', details);
+                setUserData(details);
+            } else {
+                console.log("Данные не найдено");
+                setUserData(null);
+            }
+        } catch (error) {
+            console.error("Ошибка загрузки данных:", error);
+            setUserData(null);
+        }finally {
+            setIsUserInfoLoading(false);
+        }
+    };
+
+    React.useEffect(() => {
+        const fetchUsers = async (): Promise<void> => {
+            const fetchedUsers = await getAllUsers();
+            setUsers(fetchedUsers);
+        };
+
+        fetchUsers().catch(error => {
+            console.error("Failed to fetch users:", error);
+        });
+    }, []);
+
+    return (
+        <>
+            {isUsersLoading ? (
+                <div className={styles.spinnerContainer}>
+                    <Spinner size={SpinnerSize.large} label="Loading..." />
+                </div>
+            ) : (
+                <div className={styles.div1}>
+                    <div className={styles.buttonContainer}>
+                        {buttons.map((button) => (
+                            <Button
+                                key={button.id}
+                                size="small"
+                                onClick={button.onClick}
+                                className={styles.buttonAction}
+                            >
+                                {button.label}
+                            </Button>
+                        ))}
+                    </div>
+
+                    <div className={styles.div2}>
+                        {/* List of all users of the site */}
+                        <section className={styles.firstBlock}>
+                            <div className={styles.userListHeader}>
+                                <span>Is Utility Users</span>
+                                <button onClick={getAllUsers}>Refresh</button>
+                            </div>
+                            <div className={styles.listContainer}>
+                                <List className={styles.list}>
+                                        {users.map((user) => (
+                                            <ListItem
+                                                key={user.Id}
+                                                className={${styles.listitem} ${selectedUser === user.Id ? styles.selectedItem : ''}}
+                                                onClick={() => getUserInfo(user.LoginName, user.Id)}
+                                            >
+                                                <Persona
+                                                    name={user.Title}
+                                                    size="small"
+                                                    avatar={{
+                                                        image: {
+                                                            src: ${absoluteUrl}/_layouts/15/userphoto.aspx?UserName=${user.Email}&size=S,
+                                                        },
+                                                    }}
+                                                />
+                                            </ListItem>
+                                        ))}
+                                </List>
+                            </div>
+                        </section>
+                        {/* Data about selected user */}
+                        <section className={styles.secondBlock}>
+                            {isUserInfoLoading  ? (
+                                <div className={styles.spinnerContainer}>
+                                    <Spinner size={SpinnerSize.large} label="Loading..." />
+                                </div>
+                            ) : userData ? (
+                                <div>
+                                    <div className={styles.selecteUser}>
+                                        <span >User: {userData.DisplayName ?? ""}</span>
+                                    </div>
+                                    <div className={styles.tabContainer}>
+                                        <TabList className={styles.tabList} selectedValue={activeTab} onTabSelect={handleTabChange} size="small" reserveSelectedTabSpace={false} appearance="subtle-circular">
+                                            {tabs.map((tab) => (
+                                                <Tab className={styles.tabItem} key={tab.id} id={tab.id} value={tab.value}>
+                                                    {tab.label}
+                                                </Tab>
+                                            ))}
+                                        </TabList>
+                                    </div>
+                                    <div>
+                                        {activeTab === "attributes" && "Attributes"}
+                                        {activeTab === "rdsapp" && "rdsapp"}
+                                        {activeTab === "securitygroup" && "securitygroup"}
+                                    </div>
+                                </div>
+                            ) : selectedUser !== null ? (
+                                <div>Data not found</div>
+                            ) : (
+                                <div></div>
+                            )}
+                        </section>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+}
+
+export default StatusTab;

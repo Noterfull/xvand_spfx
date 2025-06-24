@@ -1,0 +1,58 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "xvand-control-web-part-client-side-solution",
+    "id": "05bcb765-859b-4f8c-aa28-4fe5992c989f",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.20.0"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "XvandControlWebPart description"
+      },
+      "longDescription": {
+        "default": "XvandControlWebPart description"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "xvand-control-web-part Feature",
+        "description": "The feature that activates elements of the xvand-control-web-part solution.",
+        "id": "5b676fea-8419-4a5e-b2fd-dabdd8f2aee0",
+        "version": "1.0.0.0"
+      }
+    ],
+    "webApiPermissionRequests": [
+      {
+        "resource": "Microsoft Graph",
+        "scope": "User.ReadWrite.All"
+      },
+      {
+        "resource": "Microsoft Graph",
+        "scope": "Directory.ReadWrite.All"
+      },
+      {
+        "resource": "Microsoft Graph",
+        "scope": "Directory.Read.All"
+      },
+      {
+        "resource": "Microsoft Graph",
+        "scope": "Domain.Read.All"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/xvand-control-web-part.sppkg"
+  }
+}

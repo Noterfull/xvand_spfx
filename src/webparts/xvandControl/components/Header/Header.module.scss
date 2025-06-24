@@ -1,0 +1,70 @@
+@import '~@fluentui/react/dist/sass/References.scss';
+
+.root {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: flex-start;
+    row-gap: 20px;
+    padding: 10px 0px;
+
+    > * {
+        outline: none !important;
+    }
+}
+.headerContainer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    background-color: #dfdfdf;
+    border-bottom: 4px solid #498205;
+    width: 100%;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+}
+
+.logoContainer {
+    flex: 0 1 auto;
+    margin: 0 24px;
+    max-width: 200px;
+}
+
+.logo {
+    display: flex;
+    object-fit: contain;
+    object-position: left;
+}
+
+.tabContainer {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.tabList {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.tabItem {
+    box-sizing: border-box;
+    padding: 0 5px;
+}
+
+.siteName {
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.m25 {
+    margin: 0 25px;
+}
+
+.bodyContainer {
+    width: 100%;
+    min-height: 500px;
+}
